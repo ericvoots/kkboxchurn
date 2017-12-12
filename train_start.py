@@ -13,6 +13,7 @@ df_members = pd.read_csv('data\\members_v3.csv',dtype={'registered_via' : np.uin
 df_train = pd.merge(left = df_train,right = df_members,how = 'left',on=['msno'])
 
 del df_members
+gc.collect()
 df_train.head()
 
 df_transactions = pd.read_csv('data\\transactions.csv', dtype={   'payment_plan_days': np.uint8,
@@ -35,6 +36,7 @@ df_stats.reset_index(inplace=True)
 df_train = pd.merge(left=df_train, right=df_stats, how='left', on='msno')
 
 del df_transactions, df_stats
+gc.collect()
 
 # In the description the bd column is said to be in a very wide range
 # So I decided to clip it just to store it as a smaller type
@@ -47,6 +49,7 @@ df_train.head()
 bst = None
 
 df_train['gender'] = df_train['gender'].astype('category')
+
 
 print(df_train.head(5))
 '''
