@@ -94,6 +94,8 @@ df_user2 = df_user2[df_user2.last_user == 1]
 
 #append second user log and then check for dups
 df_user_all = df_user.append(df_user2)
+del df_user, df_user2
+gc.collect()
 df_user_all = df_user_all.drop(['last_user'], axis=1)
 gc.collect()
 df_user_all.sort_values(['msno','date'], ascending=[True, False])
@@ -102,4 +104,5 @@ df_user_all = df_user_all[df_user_all.last_user_all == 1]
 gc.collect()
 
 print(df_user_all.head(5))
+df_user_all.to_csv('data\\user_logs_all.csv')
 print('Done')
