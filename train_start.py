@@ -3,11 +3,24 @@ import numpy as np
 import lightgbm as lgb
 from sklearn.model_selection import ShuffleSplit
 import gc
+from sklearn.linear_model import LogisticRegression
 
 #original start from kernel:
 #https://www.kaggle.com/talysacc/lgbm-starter-lb-0-23434
 
-df_train = pd.read_csv('data\\train.csv',dtype={'is_churn' : bool,'msno' : str})
+def gender_to_numeric(x):
+    if x == 'male':
+        return 1
+    elif x == 'female':
+        return 2
+    else:
+        return 0
+
+df_train = pd.read_csv('data\\train.csv')
+df_train2 = pd.read_csv('data\\train_v2.csv')
+df_train = df_train.append(df_train2)
+del df_train2
+gc.collect()
 df_members = pd.read_csv('data\\members_v3.csv',dtype={'registered_via' : np.uint8})
 
 df_train = pd.merge(left = df_train,right = df_members,how = 'left',on=['msno'])
@@ -16,11 +29,19 @@ del df_members
 gc.collect()
 df_train.head()
 
-df_transactions = pd.read_csv('data\\transactions.csv', dtype={   'payment_plan_days': np.uint8,
+df_transactions = pd.read_csv('data\\transactions.csv', dtype={'payment_plan_days': np.uint8,
                                                                   'plan_list_price': np.uint8,
                                                                   'actual_amount_paid': np.uint8,
                                                                   'is_auto_renew': np.bool,
                                                                   'is_cancel': np.bool})
+df_transactions2 = pd.read_csv('data\\transactions_v2.csv', dtype={'payment_plan_days': np.uint8,
+                                                                  'plan_list_price': np.uint8,
+                                                                  'actual_amount_paid': np.uint8,
+                                                                  'is_auto_renew': np.bool,
+                                                                  'is_cancel': np.bool})
+df_transactions = df_transactions.append(df_transactions2)
+del df_transactions2
+gc.collect()
 
 df_transactions = pd.merge(left=df_train, right=df_transactions, how='left', on='msno')
 grouped = df_transactions.copy().groupby('msno')
@@ -48,10 +69,30 @@ df_train.head()
 
 bst = None
 
-df_train['gender'] = df_train['gender'].astype('category')
+df_train['gender'] = df_train['gender'].apply(gender_to_numeric)
 
+df_user_logs = pd.read_csv('data\\user_logs_all.csv')
+
+df_train = pd.merge(left=df_train, right=df_user_logs, how='left', on='msno')
 
 print(df_train.head(5))
+
+clf_log = LogisticRegression(C=1, penalty='l2')
+
+target = df_train['is_churn']
+
+df_train = df_train.drop(['msno','is_churn','last_user_all'],axis=1)
+
+df_train = df_train.fillna(0)
+df_train = df_train.replace(np.inf, 0)
+df_train = df_train.replace(-np.inf, 0)
+
+clf_log.fit(df_train, target)
+
+print('\nScore of Log L2 and C=1\n', clf_log.score(df_train, target))
+
+
+
 '''
 for train_indices, val_indices in ShuffleSplit(n_splits=1, test_size=0.1, train_size=0.4).split(df_train):
     train_data = lgb.Dataset(df_train.drop(['msno', 'is_churn'], axis=1).loc[train_indices, :],
