@@ -92,7 +92,8 @@ df_train = df_train.fillna(0)
 df_train = df_train.replace(np.inf, 0)
 df_train = df_train.replace(-np.inf, 0)
 df_train.to_csv('data\\full_train.csv')
-target.to_csv('data\\full_target.csv')
+#not needed
+#target.to_csv('data\\full_target.csv')
 clf_log.fit(df_train, target)
 
 print('\nScore of Log L2 and C=1\n', clf_log.score(df_train, target))
